@@ -75,7 +75,7 @@ Set up your Gmail account for automatic email polling:
   "imap_host": "imap.gmail.com",
   "imap_port": 993
 }
-```
+```sdasdsada
 
 **Note**: Use a Gmail App Password (not your regular password):
 1. Go to Google Account → Security

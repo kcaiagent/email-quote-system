@@ -405,6 +405,179 @@ After setting up Git:
 2. ✅ Clone on Hetzner server (see Deployment Guide Step 4)
 3. ✅ Continue with Docker deployment
 
+## Using SourceTree (GUI Git Client)
+
+SourceTree is a free Git GUI client by Atlassian that makes it easier to manage your repository visually.
+
+### Step 1: Download and Install SourceTree
+
+1. **Download SourceTree**
+   - Go to [https://www.sourcetreeapp.com](https://www.sourcetreeapp.com)
+   - Click **"Download for Windows"**
+   - Run the installer
+   - Follow the installation wizard
+
+2. **First Launch Setup**
+   - SourceTree will ask you to create an Atlassian account (free)
+   - Or you can skip this and use SourceTree without an account
+   - Choose your preferred Git client (SourceTree will use your system Git)
+
+### Step 2: Add Your GitHub Account
+
+1. **Open SourceTree**dsdas
+2. **Add Account**:
+   - Click **"Tools"** → **"Options"** (or **"Preferences"** on Mac)
+   - Go to **"Authentication"** tab
+   - Click **"Add"** button
+   - Select **"GitHub"**
+   - Click **"Refresh OAuth Token"** or **"Generate Token"**
+   - This will open GitHub in your browser
+   - Authorize SourceTree to access your GitHub account
+   - You'll be redirected back to SourceTree
+
+**Alternative: Use Personal Access Token**
+- If OAuth doesn't work, use a Personal Access Token:
+  - Go to GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic)
+  - Generate new token with `repo` scope
+  - Copy the token
+  - In SourceTree, add account → GitHub → Paste token as password
+
+### Step 3: Clone or Add Existing Repository
+
+**Option A: Clone from GitHub (if starting fresh)**
+
+1. In SourceTree, click **"Clone/New"** button
+2. Select **"Clone from URL"** tab
+3. Enter:
+   - **Source URL**: `https://github.com/YOUR_USERNAME/email-quote-system.git`
+   - **Destination Path**: `C:\Users\kyoto\OneDrive\Desktop\AI EMAIL WEBAPP`
+   - **Name**: `email-quote-system` (or your choice)
+4. Click **"Clone"**
+5. SourceTree will clone the repository and open it
+
+**Option B: Add Existing Local Repository**
+
+If you already have a local Git repository (which you do):
+
+1. In SourceTree, click **"Clone/New"** button
+2. Select **"Add Existing Local Repository"** tab
+3. Click **"Browse"** and navigate to:
+   - `C:\Users\kyoto\OneDrive\Desktop\AI EMAIL WEBAPP`
+4. Click **"Add"**
+5. SourceTree will detect your existing repository and open it
+
+### Step 4: Verify Remote Connection
+
+1. In SourceTree, click **"Repository"** → **"Repository Settings"**
+2. Go to **"Remotes"** tab
+3. You should see `origin` pointing to your GitHub repository
+4. If not, click **"Add"** and add:
+   - **Remote name**: `origin`
+   - **URL/Path**: `https://github.com/YOUR_USERNAME/email-quote-system.git`
+
+### Step 5: Using SourceTree for Daily Work
+
+#### Viewing Changes
+
+1. **File Status**: See which files have changed in the left panel
+2. **Diff View**: Click on a file to see what changed
+3. **Commit History**: See all commits in the graph view
+
+#### Staging and Committing
+
+1. **Stage Files**:
+   - Check the boxes next to files you want to commit
+   - Or right-click → **"Stage Selected"**
+
+2. **Write Commit Message**:
+   - Enter your commit message in the bottom text box
+   - Example: `"Add Cloudflare integration"`
+
+3. **Commit**:
+   - Click **"Commit"** button at the bottom
+   - Your changes are now committed locally
+
+#### Pushing to GitHub
+
+1. **Push Changes**:
+   - Click **"Push"** button in the toolbar
+   - Select the branch (usually `main`)
+   - Click **"OK"**
+   - SourceTree will push your commits to GitHub
+
+#### Pulling from GitHub
+
+1. **Pull Latest Changes**:
+   - Click **"Pull"** button in the toolbar
+   - Select the branch (usually `main`)
+   - Click **"OK"**
+   - SourceTree will fetch and merge changes from GitHub
+
+#### Branching
+
+1. **Create New Branch**:
+   - Click **"Branch"** button
+   - Enter branch name (e.g., `feature-cloudflare`)
+   - Click **"Create Branch"**
+
+2. **Switch Branches**:
+   - Double-click on a branch in the left panel
+   - Or right-click → **"Checkout"**
+
+3. **Merge Branches**:
+   - Right-click on the branch you want to merge
+   - Select **"Merge [branch-name] into current branch"**
+
+### Step 6: SourceTree Settings
+
+**Recommended Settings**:
+
+1. **Tools → Options → Git**:
+   - Ensure Git is properly configured
+   - Set default user name and email (if not set globally)
+
+2. **Tools → Options → General**:
+   - Enable **"Show file status in file system"** (optional)
+   - Set default commit message template (optional)
+
+### Troubleshooting SourceTree
+
+**"Authentication failed" when pushing/pulling**:
+- Go to **Tools → Options → Authentication**
+- Remove and re-add your GitHub account
+- Use Personal Access Token if OAuth doesn't work
+
+**Repository not showing changes**:
+- Click **"Refresh"** button (F5)
+- Or **Repository → Refresh**
+
+**Can't see remote branches**:
+- Click **"Fetch"** button to fetch from remote
+- Remote branches will appear in the left panel
+
+**Merge conflicts**:
+- SourceTree will highlight conflicted files
+- Right-click on file → **"Resolve Conflicts"**
+- Choose to use "Theirs" or "Mine" or edit manually
+- After resolving, stage the file and commit
+
+### SourceTree vs Command Line
+
+**SourceTree Advantages**:
+- ✅ Visual commit history graph
+- ✅ Easy to see file changes
+- ✅ Simple branching and merging
+- ✅ No need to remember Git commands
+- ✅ Built-in diff viewer
+
+**When to Use Command Line**:
+- Quick commits: `git commit -am "message"`
+- Advanced Git operations
+- Automation/scripts
+- Server deployments
+
+Both methods work with the same repository - you can use either!
+
 ## Alternative: Use GitLab or Bitbucket
 
 The process is similar:
