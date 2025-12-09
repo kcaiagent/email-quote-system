@@ -262,3 +262,5 @@ Return an empty array if no products are found."""
 # Singleton instance
 document_parser_service = DocumentParserService()
 
+
+

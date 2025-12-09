@@ -186,6 +186,10 @@ ALLOWED_ORIGINS=https://your-wix-site.wixsite.com,https://www.wix.com
 
 This guide walks you through deploying your application using Docker on a Hetzner cloud server.
 
+**📍 Where commands are run:**
+- **Steps 1-2**: On your local computer (creating server, SSH setup)
+- **Steps 3-12**: On the Hetzner server (after SSH'ing in)
+
 #### Step 1: Create Hetzner Cloud Server
 
 1. **Log in to Hetzner Cloud Console**
@@ -395,6 +399,8 @@ scp -r . root@YOUR_SERVER_IP:/opt/email-quote-api
 
 #### Step 5: Create Environment File on Server
 
+**⚠️ Run these commands ON THE SERVER (after SSH'ing in)**
+
 ```bash
 cd /opt/email-quote-api
 
@@ -402,45 +408,65 @@ cd /opt/email-quote-api
 nano .env
 ```
 
-Paste your environment variables (from section 3.3 above):
+**Paste ONLY the environment variables below (DO NOT include the ```env or ``` markers!):**
 
-```env
-# Database (Session Pooling - port 5432)
+```
 DATABASE_URL=postgresql://postgres:[PASSWORD]@db.[PROJECT-REF].supabase.co:5432/postgres
-
-# Server
 HOST=0.0.0.0
 PORT=8000
 DEBUG=false
-
-# API Security (REQUIRED!)
 API_KEY=your-strong-production-api-key-here
 REQUIRE_API_KEY=true
 WEBHOOK_SECRET=your-webhook-secret-here
-
-# Google OAuth
 GOOGLE_OAUTH_CLIENT_ID=your-client-id
 GOOGLE_OAUTH_CLIENT_SECRET=your-client-secret
 GOOGLE_OAUTH_REDIRECT_URI=http://YOUR_SERVER_IP:8000/api/oauth/google/callback
 FRONTEND_URL=https://your-wix-site.wixsite.com
-
-# Encryption Key
 ENCRYPTION_KEY=your-encryption-key
-
-# OpenAI
 OPENAI_API_KEY=your-openai-key
-
-# CORS
 ALLOWED_ORIGINS=https://your-wix-site.wixsite.com,https://www.wix.com
 ```
 
-**Important**: Replace `YOUR_SERVER_IP` with your actual Hetzner server IP address.
+**Important**: 
+- Replace `YOUR_SERVER_IP` with your actual Hetzner server IP address
+- Replace `[PASSWORD]`, `[PROJECT-REF]` with your Supabase credentials
+- Replace all `your-*-here` placeholders with actual values
+- **DO NOT copy the markdown code block markers (```env or ```)**
 
 Save and exit: `Ctrl+X`, then `Y`, then `Enter`
 
-#### Step 6: Run Database Migrations
+**Alternative: Create .env file using echo (avoids copy-paste issues):**
 
 ```bash
+cat > /opt/email-quote-api/.env << 'EOF'
+DATABASE_URL=postgresql://postgres:[PASSWORD]@db.[PROJECT-REF].supabase.co:5432/postgres
+HOST=0.0.0.0
+PORT=8000
+DEBUG=false
+API_KEY=your-strong-production-api-key-here
+REQUIRE_API_KEY=true
+WEBHOOK_SECRET=your-webhook-secret-here
+GOOGLE_OAUTH_CLIENT_ID=your-client-id
+GOOGLE_OAUTH_CLIENT_SECRET=your-client-secret
+GOOGLE_OAUTH_REDIRECT_URI=http://YOUR_SERVER_IP:8000/api/oauth/google/callback
+FRONTEND_URL=https://your-wix-site.wixsite.com
+ENCRYPTION_KEY=your-encryption-key
+OPENAI_API_KEY=your-openai-key
+ALLOWED_ORIGINS=https://your-wix-site.wixsite.com,https://www.wix.com
+EOF
+
+# Then edit it to replace placeholders
+nano /opt/email-quote-api/.env
+```
+
+#### Step 6: Run Database Migrations
+
+**⚠️ All commands from here on are run ON THE SERVER (after SSH'ing in)**
+
+```bash
+# Make sure you're in the project directory
+cd /opt/email-quote-api
+
 # Build the Docker image first
 docker compose build
 
@@ -450,7 +476,12 @@ docker compose run --rm app alembic upgrade head
 
 #### Step 7: Start the Application
 
+**Still on the server:**
+
 ```bash
+# Make sure you're in the project directory
+cd /opt/email-quote-api
+
 # Start the container in detached mode (background)
 docker compose up -d
 
@@ -460,7 +491,7 @@ docker compose logs -f
 # Check if container is running
 docker compose ps
 
-# Check health
+# Check health (on the server)
 curl http://localhost:8000/health
 ```
 
@@ -498,21 +529,9 @@ ufw status
 
 **Note**: If you use Hetzner's firewall, UFW is optional but can provide defense-in-depth.
 
-#### Step 9: Test Your API
+#### Step 9: Set Up Reverse Proxy (Required for Cloudflare)
 
-From your local machine, test the API:
-
-```powershell
-# Test health endpoint
-curl http://YOUR_SERVER_IP:8000/health
-
-# Test root endpoint
-curl http://YOUR_SERVER_IP:8000/
-```
-
-#### Step 10: Set Up Reverse Proxy (Optional but Recommended)
-
-For production, use Nginx as a reverse proxy with SSL:
+For production, use Nginx as a reverse proxy with SSL. This is required if using Cloudflare.
 
 ```bash
 # Install Nginx
@@ -522,12 +541,22 @@ apt install nginx certbot python3-certbot-nginx -y
 nano /etc/nginx/sites-available/email-quote-api
 ```
 
-Paste this configuration (replace `your-domain.com` with your domain):
+Paste this configuration (replace `api.yourdomain.com` with your domain):
 
 ```nginx
 server {
     listen 80;
-    server_name your-domain.com;
+    listen 443 ssl http2;
+    server_name api.yourdomain.com;
+
+    # SSL Configuration (will be added by Certbot)
+    # ssl_certificate /etc/letsencrypt/live/api.yourdomain.com/fullchain.pem;
+    # ssl_certificate_key /etc/letsencrypt/live/api.yourdomain.com/privkey.pem;
+    
+    # SSL Settings
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers on;
 
     location / {
         proxy_pass http://localhost:8000;
@@ -535,6 +564,15 @@ server {
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
+        
+        # Cloudflare-specific headers (if using Cloudflare)
+        proxy_set_header CF-Connecting-IP $http_cf_connecting_ip;
+        proxy_set_header CF-Ray $http_cf_ray;
+        
+        # Security headers
+        add_header X-Frame-Options "DENY" always;
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header Referrer-Policy "strict-origin-when-cross-origin" always;
     }
 }
 ```
@@ -545,11 +583,137 @@ ln -s /etc/nginx/sites-available/email-quote-api /etc/nginx/sites-enabled/
 nginx -t
 systemctl reload nginx
 
-# Get SSL certificate
-certbot --nginx -d your-domain.com
+# Get SSL certificate (required for Cloudflare Full Strict mode)
+certbot --nginx -d api.yourdomain.com
+
+# Test auto-renewal
+certbot renew --dry-run
 ```
 
-#### Step 11: Useful Docker Commands
+**Note**: If using Cloudflare, see Step 10.5 below for Cloudflare-specific configuration.
+
+#### Step 10.5: Set Up Cloudflare (Recommended for Security)
+
+Cloudflare provides essential security layers: DDoS protection, WAF, SSL/TLS, bot protection, and rate limiting.
+
+**See detailed guide**: `CLOUDFLARE_SETUP.md`
+
+**Quick Setup**:
+
+1. **Add domain to Cloudflare**:
+   - Go to [cloudflare.com](https://www.cloudflare.com) and add your domain
+   - Update nameservers at your domain registrar
+   - Wait for activation (usually a few hours)
+
+2. **Configure DNS**:
+   - Add A record: `api` → Your Hetzner server IP
+   - Enable proxy (orange cloud) ✅
+
+3. **Configure SSL/TLS**:
+   - Go to SSL/TLS → Overview
+   - Set mode to **"Full (Strict)"**
+
+4. **Enable Security Features**:
+   - Security → Settings: Set to **"Medium"**
+   - Security → Bots: Enable **"Bot Fight Mode"**
+   - Security → WAF: Configure rate limiting rules
+
+5. **Update Environment Variables**:
+   ```bash
+   nano /opt/email-quote-api/.env
+   ```
+   
+   Update:
+   ```env
+   GOOGLE_OAUTH_REDIRECT_URI=https://api.yourdomain.com/api/oauth/google/callback
+   ALLOWED_ORIGINS=https://your-wix-site.wixsite.com,https://www.wix.com,https://api.yourdomain.com
+   ```
+   
+   Restart: `docker compose restart`
+
+6. **Update Google OAuth**:
+   - Google Cloud Console → Add redirect URI: `https://api.yourdomain.com/api/oauth/google/callback`
+
+**Benefits**:
+- ✅ DDoS protection
+- ✅ WAF (blocks malicious requests)
+- ✅ Free SSL certificates
+- ✅ Bot protection
+- ✅ Rate limiting
+- ✅ Hides origin server IP
+- ✅ Global CDN for faster responses
+
+#### Step 10.5: Set Up Cloudflare (Recommended for Security)
+
+Cloudflare provides essential security layers: DDoS protection, WAF, SSL/TLS, bot protection, and rate limiting.
+
+**See detailed guide**: `CLOUDFLARE_SETUP.md`
+
+**Quick Setup**:
+
+1. **Add domain to Cloudflare**:
+   - Go to [cloudflare.com](https://www.cloudflare.com) and add your domain
+   - Update nameservers at your domain registrar
+   - Wait for activation (usually a few hours)
+
+2. **Configure DNS**:
+   - Add A record: `api` → Your Hetzner server IP
+   - Enable proxy (orange cloud) ✅
+
+3. **Configure SSL/TLS**:
+   - Go to SSL/TLS → Overview
+   - Set mode to **"Full (Strict)"**
+
+4. **Enable Security Features**:
+   - Security → Settings: Set to **"Medium"**
+   - Security → Bots: Enable **"Bot Fight Mode"**
+   - Security → WAF: Configure rate limiting rules
+
+5. **Update Environment Variables**:
+   ```bash
+   nano /opt/email-quote-api/.env
+   ```
+   
+   Update:
+   ```env
+   GOOGLE_OAUTH_REDIRECT_URI=https://api.yourdomain.com/api/oauth/google/callback
+   ALLOWED_ORIGINS=https://your-wix-site.wixsite.com,https://www.wix.com,https://api.yourdomain.com
+   ```
+   
+   Restart: `docker compose restart`
+
+6. **Update Google OAuth**:
+   - Google Cloud Console → Add redirect URI: `https://api.yourdomain.com/api/oauth/google/callback`
+
+**Benefits**:
+- ✅ DDoS protection
+- ✅ WAF (blocks malicious requests)
+- ✅ Free SSL certificates
+- ✅ Bot protection
+- ✅ Rate limiting
+- ✅ Hides origin server IP
+- ✅ Global CDN for faster responses
+
+#### Step 11: Test Your API
+
+**Test from your local machine:**
+
+```powershell
+# Test health endpoint (replace with your domain or IP)
+curl https://api.yourdomain.com/health
+# OR if not using Cloudflare yet:
+curl http://YOUR_SERVER_IP:8000/health
+
+# Test root endpoint
+curl https://api.yourdomain.com/
+```
+
+**Verify Cloudflare is working** (if using Cloudflare):
+- Visit `https://api.yourdomain.com` in browser
+- Check for Cloudflare SSL certificate
+- Look for `CF-Ray` header in browser dev tools
+
+#### Step 12: Useful Docker Commands
 
 ```bash
 # View logs

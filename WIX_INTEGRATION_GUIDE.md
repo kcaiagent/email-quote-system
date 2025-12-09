@@ -101,7 +101,9 @@ Create a new HTTP function called `createQuote`:
 import { fetch } from 'wix-fetch';
 
 export async function post_createQuote(request) {
-  const API_URL = 'https://your-api-domain.com/api/wix/quote'; // Replace with your API URL
+  // Use your Cloudflare-protected domain (recommended for security)
+  // Example: https://api.yourdomain.com/api/wix/quote
+  const API_URL = 'https://api.yourdomain.com/api/wix/quote'; // Replace with your API URL
   
   try {
     const quoteData = await request.body.json();
@@ -162,7 +164,8 @@ Create a webhook function to process incoming emails:
 import { fetch } from 'wix-fetch';
 
 export async function post_processEmail(request) {
-  const API_URL = 'https://your-api-domain.com/api/wix/webhook/email';
+  // Use your Cloudflare-protected domain (recommended for security)
+  const API_URL = 'https://api.yourdomain.com/api/wix/webhook/email';
   
   try {
     const emailData = await request.body.json();
@@ -369,14 +372,13 @@ GET /api/wix/quote/{quote_number}
 
 ## CORS Configuration
 
-Make sure your API allows requests from your Wix site. Update `app/config.py`:
+Make sure your API allows requests from your Wix site. Update `.env` file on your server:
 
-```python
-ALLOWED_ORIGINS = [
-    "https://your-site.wixsite.com",
-    "https://www.yourdomain.com",  # If using custom domain
-]
+```env
+ALLOWED_ORIGINS=https://your-site.wixsite.com,https://www.wix.com,https://api.yourdomain.com
 ```
+
+**Note**: If using Cloudflare (recommended), use your Cloudflare-protected domain (e.g., `https://api.yourdomain.com`) in the API URL and CORS configuration.
 
 ## Testing
 
@@ -387,11 +389,16 @@ ALLOWED_ORIGINS = [
 
 ## Security Considerations
 
-1. **API Authentication**: Consider adding API keys for production
-2. **Rate Limiting**: Implement rate limiting to prevent abuse
-3. **Input Validation**: Ensure all inputs are validated
-4. **HTTPS**: Always use HTTPS in production
-5. **CORS**: Restrict CORS to your specific Wix domain
+1. **Cloudflare Protection** (Recommended): 
+   - Use Cloudflare to protect your API with DDoS protection, WAF, and SSL/TLS
+   - See `CLOUDFLARE_SETUP.md` for setup instructions
+   - Provides bot protection, rate limiting, and hides origin server IP
+
+2. **API Authentication**: Use API keys for production (already implemented)
+3. **Rate Limiting**: Cloudflare provides rate limiting, or implement at application level
+4. **Input Validation**: Ensure all inputs are validated (already implemented)
+5. **HTTPS**: Always use HTTPS in production (Cloudflare provides free SSL)
+6. **CORS**: Restrict CORS to your specific Wix domain (configured in `.env`)
 
 ## Troubleshooting
 

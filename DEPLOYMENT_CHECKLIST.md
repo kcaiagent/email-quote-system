@@ -25,7 +25,15 @@ Use this checklist to track your deployment progress.
 - [ ] Ensure Git installed on server
 - [ ] Open required ports (8000 or custom)
 - [ ] Configure firewall (UFW or Hetzner firewall)
-- [ ] Set up domain/SSL certificate (optional but recommended)
+- [ ] Set up domain/SSL certificate (required for Cloudflare)
+- [ ] **Cloudflare Setup** (Recommended for security):
+  - [ ] Create Cloudflare account
+  - [ ] Add domain to Cloudflare
+  - [ ] Update nameservers at domain registrar
+  - [ ] Configure DNS A record (api subdomain → server IP)
+  - [ ] Enable Cloudflare proxy (orange cloud)
+  - [ ] Configure SSL/TLS mode (Full Strict)
+  - [ ] Enable security features (WAF, Bot Protection, Rate Limiting)
 
 ## Phase 4: Code Deployment
 
@@ -45,28 +53,44 @@ Use this checklist to track your deployment progress.
 - [ ] Configure CORS with Wix domain
 - [ ] Update OAuth redirect URI with server IP/domain
 
-## Phase 5: Start Server
+## Phase 5: Reverse Proxy & Cloudflare
+
+- [ ] Install Nginx on server
+- [ ] Configure Nginx reverse proxy
+- [ ] Get SSL certificate (Let's Encrypt via Certbot)
+- [ ] Test Nginx configuration: `nginx -t`
+- [ ] **If using Cloudflare**:
+  - [ ] Verify DNS propagation (check with `dig` or `nslookup`)
+  - [ ] Test Cloudflare SSL: `curl https://api.yourdomain.com/health`
+  - [ ] Verify Cloudflare is proxying (check for CF-Ray header)
+  - [ ] Update `.env` with Cloudflare domain URLs
+  - [ ] Update Google OAuth redirect URI to Cloudflare domain
+  - [ ] Restart Docker container: `docker compose restart`
+
+## Phase 6: Start Server
 
 - [ ] Start server (using chosen method)
   - **Docker**: `docker compose up -d` (already done in Phase 4)
   - **Direct**: `uvicorn app.main:app --host 0.0.0.0 --port 8000`
   - **PM2/systemd**: Start service
 - [ ] Test health endpoint locally: `curl http://localhost:8000/health`
-- [ ] Test health endpoint from internet: `curl http://YOUR_SERVER_IP:8000/health`
+- [ ] Test health endpoint from internet: 
+  - **With Cloudflare**: `curl https://api.yourdomain.com/health`
+  - **Without Cloudflare**: `curl http://YOUR_SERVER_IP:8000/health`
 - [ ] Verify API is accessible from internet
 - [ ] Check server logs for errors
   - **Docker**: `docker compose logs -f`
   - **Direct**: Check terminal output
 
-## Phase 6: Wix Integration
+## Phase 7: Wix Integration
 
-- [ ] Update Wix frontend with production API URL
+- [ ] Update Wix frontend with production API URL (use Cloudflare domain if configured)
 - [ ] Add API key to Wix HTTP requests
-- [ ] Update Google OAuth redirect URI in Google Cloud Console
+- [ ] Update Google OAuth redirect URI in Google Cloud Console (use Cloudflare domain)
 - [ ] Test quote creation from Wix
 - [ ] Test OAuth flow (if applicable)
 
-## Phase 7: Verification
+## Phase 8: Verification
 
 - [ ] Test health check endpoint
 - [ ] Test API key authentication
@@ -91,4 +115,8 @@ Use this checklist to track your deployment progress.
 **For Hetzner + Docker Deployment:**
 - See detailed guide in `DEPLOYMENT_GUIDE.md` Section 3.5
 - Quick reference: `DOCKER_DEPLOYMENT.md`
+
+**For Cloudflare Security Setup:**
+- See detailed guide: `CLOUDFLARE_SETUP.md`
+- Provides DDoS protection, WAF, SSL/TLS, bot protection
 

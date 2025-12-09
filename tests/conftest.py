@@ -62,3 +62,5 @@ def headers(api_key):
     """Headers with API key for authenticated requests"""
     return {"X-API-Key": api_key}
 
+
+

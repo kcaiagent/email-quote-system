@@ -11,7 +11,34 @@ git --version
 
 If Git is not installed, download it from: https://git-scm.com/download/win
 
-## Step 2: Initialize Git Repository (If Not Already Done)
+## Step 2: Configure Git (First Time Setup)
+
+**Before you can commit, Git needs to know who you are!**
+
+Configure your Git identity (use your GitHub email and name):
+
+```powershell
+# Set your name (use your real name or GitHub username)
+git config --global user.name "Your Name"
+
+# Set your email (use your GitHub email)
+git config --global user.email "your.email@example.com"
+```
+
+**Example:**
+```powershell
+git config --global user.name "kcaiagent"
+git config --global user.email "your-github-email@example.com"
+```
+
+**Verify your settings:**
+```powershell
+git config --global --list
+```
+
+**Note**: The `--global` flag sets this for all Git repositories on your computer. If you want to set it only for this project, remove `--global`.
+
+## Step 3: Initialize Git Repository (If Not Already Done)
 
 Navigate to your project directory:
 
@@ -29,7 +56,7 @@ If you see "not a git repository", initialize it:
 git init
 ```
 
-## Step 3: Verify .gitignore File
+## Step 4: Verify .gitignore File
 
 Your project already has a `.gitignore` file. Make sure it includes:
 
@@ -40,7 +67,7 @@ Your project already has a `.gitignore` file. Make sure it includes:
 - Virtual environments (`venv/`, `env/`)
 - Generated files (`pdf_quotes/*.pdf`, `uploads/`)
 
-## Step 4: Stage and Commit Your Files
+## Step 5: Stage and Commit Your Files
 
 **Add all files to Git:**
 ```powershell
@@ -57,7 +84,7 @@ git status
 git commit -m "Initial commit: Email Quote System API"
 ```
 
-## Step 5: Create Repository on GitHub
+## Step 6: Create Repository on GitHub
 
 ### Option A: Using GitHub Website
 
@@ -89,7 +116,7 @@ gh auth login
 gh repo create email-quote-system --private --source=. --remote=origin --push
 ```
 
-## Step 6: Connect Local Repository to GitHub
+## Step 7: Connect Local Repository to GitHub
 
 **Add GitHub as remote:**
 ```powershell
@@ -102,7 +129,7 @@ git remote add origin https://github.com/YOUR_USERNAME/email-quote-system.git
 git remote -v
 ```
 
-## Step 7: Push Your Code to GitHub
+## Step 8: Push Your Code to GitHub
 
 **Push to GitHub:**
 ```powershell
@@ -117,13 +144,13 @@ git push -u origin main
   - Generate new token with `repo` scope
   - Copy and use as password
 
-## Step 8: Verify Push Was Successful
+## Step 9: Verify Push Was Successful
 
 1. Go to your GitHub repository page
 2. You should see all your files
 3. Check that sensitive files (`.env`, `*.db`) are NOT visible
 
-## Step 9: Clone on Your Hetzner Server
+## Step 10: Clone on Your Hetzner Server
 
 Now you can clone the repository on your server:
 
@@ -218,6 +245,28 @@ git pull
 
 ## Troubleshooting
 
+### "Author identity unknown" Error
+
+This error means Git doesn't know who you are. You need to configure your name and email first.
+
+**Solution: Configure Git Identity**
+
+```powershell
+# Set your name (use your GitHub username or real name)
+git config --global user.name "Your Name"
+
+# Set your email (use your GitHub email)
+git config --global user.email "your.email@example.com"
+
+# Verify it worked
+git config --global --list
+```
+
+**Then try committing again:**
+```powershell
+git commit -m "Initial commit: Email Quote System API"
+```
+
 ### "src refspec main does not match any" Error
 
 This error means you **haven't created any commits yet**. Git needs at least one commit before you can push.
@@ -225,6 +274,10 @@ This error means you **haven't created any commits yet**. Git needs at least one
 **Solution: Create your first commit**
 
 ```powershell
+# First, make sure Git knows who you are (see above)
+git config --global user.name "Your Name"
+git config --global user.email "your.email@example.com"
+
 # Check current status
 git status
 

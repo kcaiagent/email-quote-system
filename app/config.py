@@ -2,8 +2,10 @@
 Configuration settings for the application
 """
 from pydantic_settings import BaseSettings
-from typing import List
+from pydantic import field_validator
+from typing import List, Union
 import os
+import json
 from dotenv import load_dotenv
 
 # Load .env file explicitly
@@ -19,14 +21,26 @@ class Settings(BaseSettings):
     # Database
     DATABASE_URL: str = "sqlite:///./quote_system.db"
     
-    # CORS
-    ALLOWED_ORIGINS: List[str] = os.getenv(
-        "ALLOWED_ORIGINS",
-        "https://www.wix.com,http://localhost:3000"
-    ).split(",") if os.getenv("ALLOWED_ORIGINS") else [
-        "https://www.wix.com",
-        "http://localhost:3000"
-    ]
+    # CORS - Accepts comma-separated string or JSON array
+    ALLOWED_ORIGINS: Union[str, List[str]] = "https://www.wix.com,http://localhost:3000"
+    
+    @field_validator('ALLOWED_ORIGINS', mode='before')
+    @classmethod
+    def parse_allowed_origins(cls, v):
+        """Parse ALLOWED_ORIGINS from comma-separated string or list"""
+        if isinstance(v, list):
+            return v
+        if isinstance(v, str):
+            # Try to parse as JSON first (for pydantic-settings)
+            try:
+                parsed = json.loads(v)
+                if isinstance(parsed, list):
+                    return parsed
+            except (json.JSONDecodeError, TypeError):
+                pass
+            # Handle comma-separated string
+            return [origin.strip() for origin in v.split(",") if origin.strip()]
+        return ["https://www.wix.com", "http://localhost:3000"]
     
     # Email Settings (Gmail IMAP)
     EMAIL_HOST: str = "imap.gmail.com"
