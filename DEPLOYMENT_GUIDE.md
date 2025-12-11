@@ -506,7 +506,7 @@ Hetzner's firewall is configured at the network level and is more efficient. If 
 3. Add the rules as specified in Step 3 above (TCP protocol, ports 22, 8000, 80, 443)
 4. Attach the firewall to your server
 
-**Option B: Use UFW (Optional - Additional Layer) Test**
+**Option B: Use UFW (Optional - Additional Layer)**
 
 You can also use UFW on the server as an additional security layer:
 
